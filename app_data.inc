@@ -19,8 +19,8 @@
     continue_prompt db 13, 10, 13, 10, 'Evaluate another expression? (Y/N): $' ; Ask whether to restart
     continue_error_prompt db 13, 10, 'Please enter Y or N.', 13, 10, '$' ; Explain invalid choice
 
-    postfix_prompt db 13, 10, 'Postfix: $' ; Label before converted output
-    result_prompt db 13, 10, 'Result: $' ; Start the signed decimal result on its own line
+    postfix_prompt db 13, 10, 13, 10, 'Postfix: $' ; Label before converted output
+    result_prompt db 13, 10, 13, 10, 'Result: $' ; Start the signed decimal result on its own line
     
     evaluation_stack dw 100 dup(?)  ; Holds up to 100 signed 16-bit numbers
     eval_top dw 0                   ; Next free evaluation stack index
