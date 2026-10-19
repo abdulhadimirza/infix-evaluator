@@ -3,8 +3,11 @@
 ; Input:  AL = operator
 ; Output: CF = 0 on success, 1 if full
 ; Preserves: BX
+; Clobbers: Flags
+; Conventions: stack_top counts occupied byte entries; AL is stored at the next free index
+; Error behavior: Returns CF=1 without modifying the stack when full
 ; -----------------------------------------
-push_operator proc
+push_operator proc ; Begin the bounded operator-stack push procedure
     push bx                   ; Save BX before using it
 
     cmp stack_top, 100        ; Check maximum stack capacity
@@ -17,14 +20,14 @@ push_operator proc
     clc                       ; Clear carry flag: success
         jmp push_done        ; Restore BX and return
 
-    push_full:
+    push_full: ; Report that the operator stack has no free entry
         stc                   ; Set carry flag: stack overflow
 
-    push_done:
+    push_done: ; Restore BX and return the carry status
         pop bx                ; Restore BX (does not modify flags)
         ret                   ; Return carry status to the caller
 
-push_operator endp
+push_operator endp ; End the bounded operator-stack push procedure
 
 
 ; -----------------------------------------
@@ -32,8 +35,11 @@ push_operator endp
 ; Output: AL = popped operator on success
 ;         CF = 0 on success, 1 if empty
 ; Preserves: BX
+; Clobbers: AL, flags
+; Conventions: stack_top counts occupied byte entries; the top entry is removed first
+; Error behavior: Returns CF=1 without modifying the stack when empty
 ; -----------------------------------------
-pop_operator proc
+pop_operator proc ; Begin the bounded operator-stack pop procedure
     push bx                   ; Preserve BX
 
     cmp stack_top, 0          ; Check whether stack is empty
@@ -46,27 +52,30 @@ pop_operator proc
     clc                       ; Clear carry flag: success
         jmp pop_done         ; Restore BX and return
 
-    pop_empty:
+    pop_empty: ; Report that no operator is available to remove
         stc                   ; Set carry flag: stack underflow
 
-    pop_done:
+    pop_done: ; Restore BX and return the carry status
         pop bx                ; Restore BX without changing flags
         ret                   ; Return carry status to the caller
 
-pop_operator endp
+pop_operator endp ; End the bounded operator-stack pop procedure
 
 
 ; -----------------------------------------
 ; Get arithmetic operator precedence
 ; Input:  AL = operator
 ; Output: AH = precedence
+; Preserves: AL
+; Clobbers: AH, flags
 ;
 ; 0 = '(' or unknown
 ; 1 = '+' or '-'
 ; 2 = '*' or '/'
 ; 3 = '^'
+; Error behavior: Unknown operators retain the documented default precedence zero
 ; -----------------------------------------
-get_precedence proc
+get_precedence proc ; Begin operator precedence lookup
     mov ah, 0                 ; Default precedence = 0
 
         cmp al, '+'           ; Check addition
@@ -84,19 +93,19 @@ get_precedence proc
 
     jmp precedence_done       ; Unknown operator keeps precedence 0
 
-    one_precedence:
+    one_precedence: ; Return precedence one for addition or subtraction
         mov ah, 1             ; Addition/subtraction precedence
         jmp precedence_done  ; Return the selected precedence
 
-    two_precedence:
+    two_precedence: ; Return precedence two for multiplication or division
         mov ah, 2             ; Multiplication/division precedence
         jmp precedence_done  ; Return the selected precedence
 
-    three_precedence:
+    three_precedence: ; Return precedence three for exponentiation
         mov ah, 3             ; Exponentiation precedence
         jmp precedence_done  ; Return the selected precedence
 
-    precedence_done:
+    precedence_done: ; Return the selected precedence in AH
         ret                   ; Return precedence in AH
 
-get_precedence endp
+get_precedence endp ; End operator precedence lookup
